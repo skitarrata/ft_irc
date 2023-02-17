@@ -1,0 +1,181 @@
+Funzioni da utilizzare in irc
+
+socket:
+ritorna un file descriptor (sockfd) di tipo intero, la sintassi si presenta
+socket(dominio, tipo, protocollo)
+dominio-->intero, specifica il dominio di comunicazione, di solito usato AF_LOCAL per la comunicazione
+tra processi su stessi host,per la comunicazione tra processi con diverse connessioni host con IPV4 si
+usa AF_INET e AF_INET6 per IPV6.
+tipo-->tipo di comunicazione, SOCK_STREAM per TCP, SOCK_DGRAM per UDP.
+protocollo-->valore del protocollo per IP, quale 0 (appare sul campo del protocollo del IP header
+di un pacchetto)
+
+setsockopt:
+aiuta a manipolare le opzioni per il socket a cui fa riferimento l'fd sockfd, èfacoltativo, ma aiuta
+a riutilizzare l'indirizzo e la porta cosi da prevenire errori come indirizzo gia in uso, la sintassi
+setsockopt(int sockfd, int level, int optname,  const void *optval, socklen_t optlen)
+
+bind:
+dopo la creazione del socket, la funzione bind lega il socket all'indirizzo e alla porta specificandolo
+in addr(una struttura dati). Nel esempio, colleghiamo il server a localhost, quindi utilizziamo
+INADDR_ANY per specificare l'indirizzo IP.
+Sintassi: bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+
+listen:
+Sintassi: listen(int sockfd, int backlog)
+Mette il socket del server in modalità passiva, dove attende che il client approcci al server
+per stabilire una connessione. Il backlog definisce la lunghezza massima fino alla quale può crescere
+la queue di connessioni in sospeso per sockfd.
+Se arriva una richiesta di connessione quando la coda è piena, il client potrebbe ricevere un errore
+con l'indicazione ECONNREFUSED.
+
+accept:
+sintassi: new_socket = accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
+Estrae la prima richiesta di connessione dalla coda delle connessioni in sospeso per il socket in ascolto,
+sockfd, crea un nuovo socket connesso e restituisce un nuovo descrittore di file che fa riferimento a
+quel socket. A questo punto, la connessione tra client e server è stabilita e sono pronti per
+trasferire i dati.
+
+connect:
+sintassi: connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
+ritorna un intero, collega il socket a cui fa riferimento il descrittore di file sockfd all'indirizzo
+specificato da addr. L'indirizzo e la porta del server sono specificati in addr.
+
+getsockname:
+ritorna a video il nome del socket locale (0 se è andato a buon fine).
+sintassi: int getsockname(int sockfd, struct sockaddr *addr, int *addrlen);
+
+getprotobyname:
+sintassi: struct protoent *getprotobyname(const char *name);
+restituisce una struttura protoent per le entry dal database che corrisponde al nome del protocollo.
+se necessario viene aperta una connessione al database (name sta per il nome del protocollo).
+
+gethostbyname:
+sintassi: struct hostent *gethostbyname(const char *name);
+restituisce una struttura di tipo hostent per il nome host specificato, name è un nome host o un
+indirizzo IPv4 Se name è un indirizzo IPv4, non viene eseguita alcuna ricerca e gethostbyname() copia
+semplicemente name nel campo h_name e la sua struct in_addr equivalente nel campo h_addr_list[0]
+della struttura hostent restituita.
+
+getaddrinfo:
+sintassi: int getaddrinfo(const char *restrict node, const char *restrict service, const struct addrinfo *restrict hints, struct addrinfo **restrict res);
+
+freeaddrinfo:
+sintassi: void freeaddrinfo(struct addrinfo *res);
+
+htonl:
+sintassi: uint32_t htonl(uint32_t hostlong);
+converte hostlong (che è unsigned int) dall'ordine dei byte dell'host all'ordine dei byte della rete
+
+htons:
+sintassi: uint16_t htons(uint16_t hostshort);
+converte hostshort (che è unsigned short int) dall'ordine dei byte dell'host all'ordine dei byte della rete
+
+ntohl:
+sintassi: uint32_t ntohl(uint32_t netlong);
+converte netlong (che è unsigned int) dall'ordine dei byte della rete all'ordine dei byte dell'host
+
+ntohs:
+sintassi:  uint16_t ntohs(uint16_t netshort);
+converte netshort (che è unsigned short int) dall'ordine dei byte della rete all'ordine dei byte dell'host
+
+
+inet_addr:
+sintassi: in_addr_t inet_addr(const char *cp);
+converte l'indirizzo host cp con notazione IPv4 (numeri e punti) in dati binari nell'ordine dei byte di rete
+ritorna -1 se l'input non è valido (a volte usare questa funzione può essere problematico, dato che -1 è
+un indirizzo valido che rappresenta 255.255.255.255, possiamo aiutarci con getaddrinfo().)
+
+inet_ntoa:
+sintassi: char *inet_ntoa(struct in_addr in);
+converte l'indirizzo host (in) con notazione binaria nell'ordine dei byte di rete in una stringa IPv4
+la stringa ritornata è allocata in un buffer statico in modo che le chiamate successive della funzione
+sovrascriveranno nel buffer.
+
+send:
+sintassi: ssize_t send(int sockfd, const void *buf, size_t len, int flags);
+è usata per trasmettere un messaggio ad un altro socket, la chiamata send() può essere usata solo quando il
+socket è in uno stato di connessione, l'unica differenza tra send() e write() è la presenza della flags.
+infatti se impostato a 0 flags, send() è equivalente a write().
+
+recv:
+sintassi: ssize_t recv(int sockfd, void *buf, size_t len, int flags);
+è usata per ricevere un messaggio da un socket, la chiamata send() può essere usata per ricevere dati su
+socket in connection-less e connection-oriented, l'unica differenza tra recv() e read() è la presenza della
+flags, infatti se impostato a 0 flags, recv() è equivalente a read().
+
+signal:
+sintassi: sighandler_t signal(int signum, sighandler_t handler);
+definisce un metodo per gestire il segnale. Il gestore del segnale può essere impostato in modo che venga
+eseguita una delle seguenti azioni:
+gestione predefinita del segnale
+ignora il segnale
+La funzione definita dall'utente viene chiamata per gestire il segnale
+In caso di successo, restituisce il precedente gestore di segnale e in caso di errore viene
+restituito SIG_ERR.
+
+lseek:
+sintassi: off_t lseek(int fd, off_t offset, int whence);
+è usata per cambiare la locazione del puntatore read/write di un file descriptor, La posizione può essere
+impostata in termini assoluti o relativi. Restituisce l'offset del puntatore in byte da inizio del file,
+restituisce -1 in caso di errore di movimento del puntatore.
+offset--> rappresenta l'offset del puntatore misurato in byte.
+whence--> il metodo in cui deve essere interpretato l'offset.
+
+fstat:
+sintassi:  int fstat(int fd, struct stat *buff);
+la funzione ottiene informazioni sullo' oggetto specificato dal file descriptor e memorizza le informazioni
+nell'area di memoria indicata dall'argomento buff. Le informazioni sullo stato vengono restituite in una
+struttura stat definita dall' header file <sys/stat.h>, ritorna 0 se l'operazione ha avuto successo, ovvero
+l'informazione è stata allocata correttamente nel buff, -1 altrimenti.
+
+fcntl:
+sintassi: int fcntl(int fd, int cmd, ... /* arg */ );
+esegue una delle operazioni descritte di seguito sul file descriptor fd. L'operazione è determinata da cmd.
+può accettare un terzo argomento facoltativo. Se questo argomento è richiesto o meno è determinato da cmd.
+Il tipo di argomento richiesto è indicato tra parentesi dopo ogni nome cmd (nella maggior parte dei casi,
+il tipo richiesto è int, e identifichiamo l'argomento utilizzando il nome arg), oppure viene specificato
+void se l'argomento non è richiesto.
+
+poll:
+sintassi: int poll(struct pollfd *fds, nfds_t nfds, int timeout);
+attende che uno dei set di file descriptor sia pronto per eseguire l'I/O.
+L'insieme di file descriptor da monitorare è specificato nell'argomento fds, che è un array di strutture
+della seguente forma:
+
+           struct pollfd
+	   {
+               int   fd;         /* file descriptor */
+               short events;     /* requested events */
+               short revents;    /* returned events */
+           };
+
+nfds specifica il numero di elementi nell'array fds.
+Il campo fd contiene un descrittore di file per un file aperto. Se questo campo è negativo, il campo events
+corrispondente viene ignorato e il campo revents restituisce 0. (Ciò fornisce un modo semplice per ignorare
+un file descriptor, per una singola chiamata a poll(): semplicemente nega il campo fd. Si noti, tuttavia,
+che questa tecnica non può essere utilizzata per ignorare il descrittore di file 0.)
+Il campo events è un parametro di input, una maschera di bit che specifica gli eventi a cui l'applicazione
+è interessata per il descrittore di file fd.
+Questo campo può essere specificato come zero, nel qual caso gli unici eventi che possono essere restituiti
+in revents sono POLLHUP, POLLERR e POLLNVAL.
+Il campo revents è un parametro di output, riempito dal kernel con gli eventi realmente accaduti.
+I bit restituiti in revents possono includere qualsiasi stato specificati negli eventi o uno dei valori
+POLLERR, POLLHUP o POLLNVAL. (Questi tre bit non hanno significato nel campo eventi e verranno impostati
+nel campo revents ogni volta che la condizione corrispondente è vera.)
+Se nessuno degli eventi richiesti (e nessun errore) si è verificato per nessuno dei descrittori di file,
+allora poll() si blocca finché non si verifica uno degli eventi.
+L'argomento timeout specifica il numero di millisecondi che poll() dovrebbe bloccare in attesa che un
+descrittore di file sia pronto. La chiamata si bloccherà fino a quando:
+un descrittore di file diventa pronto.
+la chiamata viene interrotta da un gestore di segnale.
+il timeout scade.
+specificando un timeout negativo si avrà un tempo infinito, se specificato 0 poll() ritornerà immediatamente
+anche se nessun descrittore di file è pronto.
+
+
+RISORSE:
+per programmazione socket con librerie <sys/socket.h> e <netinet/in.h>:
+https://www.geeksforgeeks.org/socket-programming-cc/
+per getaddrinfo e freeaddtinfo:
+https://man7.org/linux/man-pages/man3/getaddrinfo.3.html
