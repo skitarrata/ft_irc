@@ -11,9 +11,19 @@ protocollo-->valore del protocollo per IP, quale 0 (appare sul campo del protoco
 di un pacchetto)
 
 setsockopt:
-aiuta a manipolare le opzioni per il socket a cui fa riferimento l'fd sockfd, èfacoltativo, ma aiuta
+aiuta a manipolare le opzioni per il socket a cui fa riferimento l'fd sockfd, è facoltativo, ma aiuta
 a riutilizzare l'indirizzo e la porta cosi da prevenire errori come indirizzo gia in uso, la sintassi
 setsockopt(int sockfd, int level, int optname,  const void *optval, socklen_t optlen)
+level-->Quando si manipolano le opzioni socket, è necessario specificare il livello in cui risiede
+l'opzione e il nome dell'opzione. Per manipolare le opzioni a livello di API socket, level è specificato
+come SOL_SOCKET. Per manipolare le opzioni a qualsiasi altro livello viene fornito il numero di protocollo
+del protocollo appropriato che controlla l'opzione. Ad esempio, per indicare che un'opzione deve essere
+interpretata dal protocollo TCP, level dovrebbe essere impostato sul numero di protocollo di TCP; vedere
+getprotoent(3).
+Gli argomenti optval e optlen sono usati per accedere ai valori delle opzioni per setsockopt()
+La maggior parte delle opzioni a livello di socket utilizza un argomento int per optval. Per setsockopt(),
+l'argomento dovrebbe essere diverso da zero per abilitare un'opzione booleana, o zero se l'opzione deve
+essere disabilitata.
 
 bind:
 dopo la creazione del socket, la funzione bind lega il socket all'indirizzo e alla porta specificandolo

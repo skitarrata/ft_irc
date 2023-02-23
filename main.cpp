@@ -5,15 +5,15 @@
 void		checkPriority(int ac, std::string port, std::string pass)
 {
 	if (ac != 3)
-		throw std::out_of_range("use this sintax ./ircserv <port> <password>\n");
-	if (port.length() <= 0 || port.length() > 5)
-		throw std::out_of_range("bad port\n");
-	if (pass.length() <= 0)
-		throw std::out_of_range("bad password\n");
-	for(int i = 0; i < port.length(); i++)
+		throw std::invalid_argument("use this sintax ./ircserv <port> <password>\n");
+	if (port.size() <= 0 || port.size() > 5)
+		throw std::invalid_argument("bad port\n");
+	if (pass.size() <= 0)
+		throw std::invalid_argument("bad password\n");
+	for(size_t i = 0; i < port.size(); i++)
 		if (port[i] < 48 || port[i] > 57)
 			throw std::invalid_argument("bad port\n");
-	for(int i = 0; i < pass.length(); i++)
+	for(size_t i = 0; i < pass.size(); i++)
 		if (pass[i] < 33 || pass[i] > 126)
 			throw std::invalid_argument("bad password\n");
 }
