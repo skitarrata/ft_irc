@@ -1,5 +1,8 @@
-#ifndef UTILSCOM.HPP
-#define UTILSCOM.HPP
+#ifndef UTILSCOM_HPP
+#define UTILSCOM_HPP
+
+#include <map>
+#include "Command.hpp"
 
 #define ERR_UNKNOWNCOMMAND(command)				"421 " + command + " :Unknown command"
 #define ERR_NEEDMOREPARAMS(command)				"461 " + command + " :Not enough parameters"
@@ -21,5 +24,40 @@
 #define RPL_WELCOME								"001 " + " :Welcome to the Internet Relay Network" // come implemento <nick>!<user>@<host> 
 #define RPL_NAMREPLY(channel, users)			"353 " + " = " + channel + " :" + users
 #define RPL_ENDOFNAMES(channel)					"366 " + channel + " :End of NAMES list."
+
+class UtilsCom
+{
+	private:
+		std::map<std::string, Command*> com;
+	protected:
+		std::map<std::string, Command*>::iterator iter = com.begin();
+	public:
+		UtilsCom()
+		{
+			com["NICK"] = new comNick();
+			com["USER"] = new comUser();
+			com["PASS"] = new comPass();
+			com["KICK"] = new comKick();
+			com["PING"] = new comPing();
+			com["PONG"] = new comPong();
+			com["MODE"] = new comMode();
+			com["JOIN"] = new comJoin();
+			com["QUIT"] = new comQuit();
+			com["PART"] = new comPart();
+			com["NOTICE"] = new comNotice();
+			com["PRIVMSG"] = new comPrivmsg();
+		};
+
+		Command*		searchCommand(std::string key)
+		{
+			while (iter != com.end())
+			{
+				if (iter->first == key)
+					return iter->second;
+			}
+			return NULL;
+		};
+		~UtilsCom(){};
+};
 
 #endif
