@@ -1,17 +1,14 @@
 #ifndef COMMAND_HPP
 #define COMMAND_HPP
 
-#include <iostream>
-#include <string>
-#include "../Client/Client.hpp"
-#include "../Server/Server.hpp"
+#include "UtilsCom.hpp"
 
 class	Command
 {
 	protected:
-		Server*		_serv; // definire la classe in seguito di server per i vari elementi che servono per le macro
+		Server*		serv; // definire la classe in seguito di server per i vari elementi che servono per le macro
 	public:
-		Command(Server* serv) : _serv(serv){};
+		Command(Server* _serv) : serv(_serv){};
 		virtual	void	functionCommand() = 0;
 		virtual ~Command(){};
 };
@@ -24,8 +21,24 @@ class comNick : public Command
 		virtual void	functionCommand(Client* cli, std::string nick)
 		{
 			if (nick.empty())
-				//errore
-			cli->setNickname(nick); 
+			{
+				cli->write(ERR_NONICKNAMEGIVEN);
+				return;
+			}
+			if (serv->compareNick(nick))
+			{
+				cli->write(ERR_NICKNAMEINUSE(nick));
+				return;
+			}
+			for (size_t i = 0; i < nick.size(); i++)
+				if(nick[i] < 33 || nick[i] > 126)
+				{
+					cli->write(ERR_ERRONEUSNICKNAME(nick));
+					return;
+				}
+			cli->setNickname(nick);
+			cli->welcome();
+			return;
 		}
 
 		virtual ~comNick(){};
@@ -34,8 +47,17 @@ class comNick : public Command
 class comUser : public Command
 {
 	public:
-		comUser(Server* serv){};
-		virtual ~comUser(){}
+		comUser(Server* serv) : Command(serv){};
+		virtual void	functionCommand(Client* cli, std::string user, int mod, std::string realn)
+		{
+
+			cli->setusername(user);
+			cli->setrealname(realn);
+			cli->sethostname(serv->gethost());
+			cli->welcome();
+		}
+
+		virtual ~comUser(){};
 };
 
 class comPass : public Command

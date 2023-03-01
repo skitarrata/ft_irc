@@ -2,10 +2,14 @@
 #define UTILSCOM_HPP
 
 #include <map>
-#include "Command.hpp"
+#include <iostream>
+#include <string>
+#include "../Client/Client.hpp"
+#include "../Server/Server.hpp"
 
 #define ERR_UNKNOWNCOMMAND(command)				"421 " + command + " :Unknown command"
 #define ERR_NEEDMOREPARAMS(command)				"461 " + command + " :Not enough parameters"
+#define ERR_ERRONEUSNICKNAME(nickname)			"432 " + nickname + " :Erroneous nickname"
 #define ERR_NOTREGISTERED						"451 :You have not registered"
 #define ERR_ALREADYREGISTERED					"462 :You may not reregister"
 #define ERR_PASSWDMISMATCH						"464 :Password incorrect"
@@ -21,43 +25,8 @@
 #define ERR_CHANNELISFULL(channel)				"471 " + channel + " :Cannot join channel (+l)"
 #define ERR_CANNOTSENDTOCHAN(channel)			"404 " + channel + " :Cannot send to channel"
 
-#define RPL_WELCOME								"001 " + " :Welcome to the Internet Relay Network" // come implemento <nick>!<user>@<host> 
+#define RPL_WELCOME(nickname, users, host)		"001 :Welcome to the Internet Relay Network " + nickname + "!" + users + "@" + host
 #define RPL_NAMREPLY(channel, users)			"353 " + " = " + channel + " :" + users
 #define RPL_ENDOFNAMES(channel)					"366 " + channel + " :End of NAMES list."
-
-class UtilsCom
-{
-	private:
-		std::map<std::string, Command*> com;
-	protected:
-		std::map<std::string, Command*>::iterator iter = com.begin();
-	public:
-		UtilsCom()
-		{
-			com["NICK"] = new comNick();
-			com["USER"] = new comUser();
-			com["PASS"] = new comPass();
-			com["KICK"] = new comKick();
-			com["PING"] = new comPing();
-			com["PONG"] = new comPong();
-			com["MODE"] = new comMode();
-			com["JOIN"] = new comJoin();
-			com["QUIT"] = new comQuit();
-			com["PART"] = new comPart();
-			com["NOTICE"] = new comNotice();
-			com["PRIVMSG"] = new comPrivmsg();
-		};
-
-		Command*		searchCommand(std::string key)
-		{
-			while (iter != com.end())
-			{
-				if (iter->first == key)
-					return iter->second;
-			}
-			return NULL;
-		};
-		~UtilsCom(){};
-};
 
 #endif
