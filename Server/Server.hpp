@@ -2,34 +2,45 @@
 #define SERVER_HPP
 
 #include <iostream>
-#include <vector>
+#include <map>
 #include <string>
 #include "../Client/Client.hpp"
 
 class	Server
 {
 	private:
-		int						fd; //da vedere dove prenderlo
-		std::vector<Client*>	clients;
-		std::string				password;
-		std::string				host;
-		std::string				port;
+		int								fd; //da vedere dove prenderlo
+		std::map<std::string, Client*>	clients;
+		std::string						host;
+		std::string						port;
 	protected:
-		std::vector<Client*>::iterator iter;
+		std::map<std::string, Client*>::iterator iter;
 	public:
-		Server(std::string _port, std::string _pass) : port(_port), password(_pass){};
+		Server(std::string _port) : port(_port){};
 		std::string		getport(){ return port; }
-		std::string		getpassword(){ return password; }
 		std::string		gethost(){ return host; }
 		void			sethost(std::string h){ host = h; }
 		void			setport(std::string p){ port = p; }
-		void			setpassword(std::string p){ password = p; }
-		void			addClient(){ clients.push_back(new Client(fd, port)); }
+//		void			addClient() non dimenticare di mandare un messaggio per accertarsi che la registrazione sia corretta
+		Client *		searchClient(std::string key)
+		{
+			iter = clients.begin();
+			while (iter != clients.end())
+			{
+				if (iter->first == key)
+					return iter->second;
+			}
+			return NULL;
+		}
+		
 		int				compareNick(std::string nick)
 		{
-			for (iter = clients.begin(); iter != clients.end(); iter++)
-				if (iter.operator*()->getNickname() == nick)
+			iter = clients.begin();
+			while (iter != clients.end())
+			{
+				if (iter->first == nick)
 					return 1;
+			}
 			return 0;
 		}
 		virtual ~Server(){};

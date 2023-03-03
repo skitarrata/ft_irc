@@ -3,6 +3,7 @@
 
 #include <map>
 #include <iostream>
+#include <exception>
 #include <string>
 #include "../Client/Client.hpp"
 #include "../Server/Server.hpp"
@@ -10,6 +11,8 @@
 #define ERR_UNKNOWNCOMMAND(command)				"421 " + command + " :Unknown command"
 #define ERR_NEEDMOREPARAMS(command)				"461 " + command + " :Not enough parameters"
 #define ERR_ERRONEUSNICKNAME(nickname)			"432 " + nickname + " :Erroneous nickname"
+#define ERR_UMODEUNKNOWNFLAG 					"501 :Unknown MODE flag"
+#define ERR_USERSDONTMATCH						"502 :Cannot change mode for other users"
 #define ERR_NOTREGISTERED						"451 :You have not registered"
 #define ERR_ALREADYREGISTERED					"462 :You may not reregister"
 #define ERR_PASSWDMISMATCH						"464 :Password incorrect"
@@ -25,8 +28,14 @@
 #define ERR_CHANNELISFULL(channel)				"471 " + channel + " :Cannot join channel (+l)"
 #define ERR_CANNOTSENDTOCHAN(channel)			"404 " + channel + " :Cannot send to channel"
 
-#define RPL_WELCOME(nickname, users, host)		"001 :Welcome to the Internet Relay Network " + nickname + "!" + users + "@" + host
+//se servono in client bisogna spostarli
 #define RPL_NAMREPLY(channel, users)			"353 " + " = " + channel + " :" + users
 #define RPL_ENDOFNAMES(channel)					"366 " + channel + " :End of NAMES list."
+
+/* class	AccessDenied : std::runtime_error
+{
+	public:
+		AccessDenied(std::string msg) : std::runtime_error(msg){}
+}; */
 
 #endif

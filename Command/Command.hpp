@@ -6,11 +6,12 @@
 class	Command
 {
 	protected:
-		Server*		serv; // definire la classe in seguito di server per i vari elementi che servono per le macro
+		std::string		namecom;
+		Server*			serv; // definire la classe in seguito di server per i vari elementi che servono per le macro
 	public:
-		Command(Server* _serv) : serv(_serv){};
-		virtual	void	functionCommand() = 0;
-		virtual ~Command(){};
+		Command(Server* _serv) : serv(_serv){}
+		virtual	void	functionCommand();
+		virtual ~Command(){}
 };
 
 class comNick : public Command
@@ -18,53 +19,217 @@ class comNick : public Command
 	public:
 		comNick(Server* serv) : Command(serv){}
 
-		virtual void	functionCommand(Client* cli, std::string nick)
+		virtual void	functionCommand(Client* mit, std::string nick)
 		{
+			
+			namecom = "NICK";
 			if (nick.empty())
 			{
-				cli->write(ERR_NONICKNAMEGIVEN);
+				mit->write(ERR_NONICKNAMEGIVEN);
+				return;
+			}
+			if (!mit->getrestricted())
+			{
+				if (serv->compareNick(nick))
+				{
+					mit->write(ERR_NICKNAMEINUSE(nick));
+					return;
+				}
+				for (size_t i = 0; i < nick.size(); i++)
+					if(nick[i] < 33 || nick[i] > 126)
+					{
+						mit->write(ERR_ERRONEUSNICKNAME(nick));
+						return;
+					}
+				mit->setNickname(nick);
+				mit->isRegistred();
+			}
+			else
+				mit->write("operation DENIED for you!");
+			return;
+		}
+
+		virtual ~comNick(){}
+};
+
+class comMode : public Command
+{
+	private:
+		bool		sign;
+	public:
+		comMode(Server* serv) : Command(serv){}
+		virtual void	functionCommand(Client* mit, std::string nick, std::string flag)
+		{
+			Client* cli;
+			namecom = "MODE";
+			if (nick.empty() || flag.empty())
+			{
+				cli->write(ERR_NEEDMOREPARAMS(namecom));
 				return;
 			}
 			if (serv->compareNick(nick))
 			{
-				cli->write(ERR_NICKNAMEINUSE(nick));
+				cli->write(ERR_USERSDONTMATCH);
 				return;
 			}
-			for (size_t i = 0; i < nick.size(); i++)
-				if(nick[i] < 33 || nick[i] > 126)
+			if (flag.size() != 2)
+			{
+				cli->write(ERR_UMODEUNKNOWNFLAG);
+				return;
+			}
+			if (!mit->getrestricted())
+			{
+				switch (flag[0])
 				{
-					cli->write(ERR_ERRONEUSNICKNAME(nick));
-					return;
+					case '-' :
+						sign = 0;
+						break;
+					case '+' :
+						sign = 1;
+						break;
+					default:
+						cli->write(ERR_UMODEUNKNOWNFLAG);
+						return;
 				}
-			cli->setNickname(nick);
-			cli->welcome();
+
+				switch (flag[1])
+				{
+					case 'i' :
+						cli = serv->searchClient(nick);
+						cli->invisible(sign);
+						break;
+					case 'w' :
+						//come posso inviare messaggi solo agli OP?
+						break;
+					case 'r' :
+						if (mit->getIRC_OP()) //se sei op puoi metterla agli altri
+						{
+							cli = serv->searchClient(nick);
+							if (sign)
+								cli->setrestricted(1);
+							else
+								cli->setrestricted(0);
+						}
+						else if (mit->getNickname() == nick) //a te stesso si
+						{
+							if (sign)
+								mit->setrestricted(1);
+							else
+								mit->setrestricted(0);
+						}
+						else // ma agli altri no
+							mit->write("operation DENIED for you!");
+						break;
+					case 'o' || 'O':
+						if (mit->getIRC_OP())
+						{
+							cli = serv->searchClient(nick);
+							if (sign)
+								cli->setIRC_OP(1);
+							else
+								cli->setIRC_OP(0);
+						}
+						else
+							mit->write("operation DENIED for you!");
+						break;
+					case 's' :
+						//richiede sempre messaggi privati
+						break;
+					default:
+						cli->write(ERR_UMODEUNKNOWNFLAG);
+				}
+			}
+			else
+				mit->write("operation DENIED for you!");
 			return;
 		}
 
-		virtual ~comNick(){};
+		virtual ~comMode(){}
 };
 
 class comUser : public Command
 {
 	public:
-		comUser(Server* serv) : Command(serv){};
-		virtual void	functionCommand(Client* cli, std::string user, int mod, std::string realn)
+		comUser(Server* serv) : Command(serv){}
+		virtual void	functionCommand(Client* mit, std::string user, const char mod, const char sep, std::string realn)
 		{
-
-			cli->setusername(user);
-			cli->setrealname(realn);
-			cli->sethostname(serv->gethost());
-			cli->welcome();
+			namecom = "USER";
+			if (user.empty() || !mod || !sep || realn.empty())
+			{
+				mit->write(ERR_NEEDMOREPARAMS(namecom));
+				return;
+			}
+			if (sep != '*' || mod < '0' || mod > '7')
+			{
+				mit->write("Use this parameters: <user> <mode> <*> <realname>");
+				return;
+			}
+			if (!mit->getrestricted())
+			{
+				if (mit->getregistred())
+				{
+					mit->write(ERR_ALREADYREGISTERED);
+					return;
+				}
+				switch (mod)
+				{
+					case '2' :
+						mit->invisible(1);
+						break;
+					case '3' :
+						//come posso inviare messaggi solo agli OP?
+						break;
+					case '4' :
+						mit->setrestricted(1);
+						break;
+					case '5' || '6':
+						mit->write("operation DENIED for you!");
+						break;
+					case '7' :
+						//richiede sempre messaggi privati
+						break;
+					default:
+						mit->write(ERR_UMODEUNKNOWNFLAG);
+				}
+				mit->setusername(user);
+				mit->setrealname(realn);
+				mit->sethostname(serv->gethost());
+				mit->isRegistred();
+			}
+			else
+				mit->write("operation DENIED for you!");
+			return;
 		}
 
-		virtual ~comUser(){};
+		virtual ~comUser(){}
 };
 
 class comPass : public Command
 {
 	public:
-		comPass(Server* serv){};
-		virtual ~comPass(){};
+		comPass(Server* serv) : Command(serv){}
+		virtual void	functionCommand(Client* mit, std::string pass)
+		{
+			namecom = "PASS";
+			if (pass.empty())
+			{
+				mit->write(ERR_NEEDMOREPARAMS(namecom));
+				return;
+			}
+			if (!mit->getrestricted())
+			{
+				if (mit->getregistred())
+				{
+					mit->write(ERR_ALREADYREGISTERED);
+					return;
+				}
+				mit->setpassword(pass);
+				mit->isRegistred();
+			}
+			else
+				mit->write("operation DENIED for you!");
+		}
+		virtual ~comPass(){}
 };
 
 class comKick : public Command
@@ -82,13 +247,6 @@ class comPing : public Command
 };
 
 class comPong : public Command
-{
-	public:
-		com
-		virtual ~com
-};
-
-class comMode : public Command
 {
 	public:
 		com
